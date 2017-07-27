@@ -20,6 +20,8 @@ if (!require(ggplot2))
   install.packages("ggplot2")
 if (!require(ggthemes))
   install.packages("ggthemes")
+if (!require(DT))
+  install.packages("DT")
 
 
 library(readr)
