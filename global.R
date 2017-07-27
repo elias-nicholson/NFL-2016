@@ -1,3 +1,15 @@
+if (!require(readr))
+  install.packages("readr")
+if (!require(dplyr))
+  install.packages("dplyr")
+if (!require(sp))
+  install.packages("sp")
+if (!require(shiny))
+  install.packages("shiny")
+if (!require(leaflet))
+  install.packages("leaflet")
+
+
 library(readr)
 library(dplyr)
 library(sp)
