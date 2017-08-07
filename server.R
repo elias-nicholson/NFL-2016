@@ -1,9 +1,27 @@
-
-# This is the server logic for a Shiny web application.
-# You can find out more about building applications with Shiny here:
-#
-# http://shiny.rstudio.com
-#
+if (!require(shiny))
+  install.packages("shiny")
+if (!require(leaflet))
+  install.packages("leaflet")
+if (!require(RColorBrewer))
+  install.packages("RColorBrewer")
+if (!require(scales))
+  install.packages("scales")
+if (!require(lattice))
+  install.packages("lattice")
+if (!require(dplyr))
+  install.packages("dplyr")
+if (!require(ggplot2))
+  install.packages("ggplot2")
+if (!require(ggthemes))
+  install.packages("ggthemes")
+if (!require(ggpmisc))
+  install.packages("ggpmisc")
+if (!require(DT))
+  install.packages("DT")
+if (!require(readr))
+  install.packages("readr")
+if (!require(sp))
+  install.packages("sp")
 
 library(shiny)
 library(leaflet)
@@ -13,11 +31,13 @@ library(lattice)
 library(dplyr)
 library(ggplot2)
 library(ggthemes)
+library(ggpmisc)
 library(DT)
 
 
-
 shinyServer(function(input, output, session) {
+  
+
   #Creates a map
   output$map <- renderLeaflet({leaflet(NFL2016stats) %>%
       addProviderTiles(providers$Stamen.Toner) %>%
@@ -56,30 +76,31 @@ shinyServer(function(input, output, session) {
   
   #observations
   observe({
-    colorBy <- input$color
-    sizeBy <- input$size
-    
-    colorData <- NFL2016stats[[colorBy]]
-    
-    
-    pal <- colorNumeric("magma", colorData, reverse = TRUE)
-    
-    
-    if(sizeBy == "Rank"){
-      radius <- rank(-NFL2016stats[[sizeBy]])/length(NFL2016stats[[sizeBy]]) * 150000
-    } 
-    else {
-      radius <- NFL2016stats[[sizeBy]] / max(NFL2016stats[[sizeBy]]) * 150000
-    }
-    
-    leafletProxy("map", data = NFL2016stats) %>%
-      clearShapes() %>%
-      addCircles(lng = ~longitude,lat = ~latitude, radius= radius, layerId = ~Team,
-                 stroke=FALSE, fillOpacity=0.7, fillColor=pal(colorData)) %>%
-      addLegend("bottomleft", pal=pal, values=colorData, title=colorBy,
-                layerId="colorLegend")
-    
-  })
+      colorBy <- input$color
+      sizeBy <- input$size
+      
+      colorData <- NFL2016stats[[colorBy]]
+      
+      
+      pal <- colorNumeric("magma", colorData, reverse = TRUE)
+      
+      
+      if(sizeBy == "Rank"){
+        radius <- rank(-NFL2016stats[[sizeBy]])/length(NFL2016stats[[sizeBy]]) * 150000
+      }
+      else {
+        radius <- NFL2016stats[[sizeBy]] / max(NFL2016stats[[sizeBy]]) * 150000
+      }
+      
+      leafletProxy("map", data = NFL2016stats) %>%
+        clearShapes() %>%
+        addCircles(lng = ~longitude,lat = ~latitude, radius= radius, layerId = ~Team,
+                   stroke=FALSE, fillOpacity=0.7, fillColor=pal(colorData)) %>%
+        addLegend("bottomleft", pal=pal, values=colorData, title=colorBy,
+                  layerId="colorLegend")
+      
+    })
+  
   
   #creating the map popups 
   showPopup <- function(Team, latitude, longitude) {
@@ -152,11 +173,38 @@ shinyServer(function(input, output, session) {
     tempdf <- data.frame(xdata, ydata, Conference, Division)
     
     groupchoice <- input$cluster
-
     
+    my.formula <- y ~ x
+    
+    
+    if(groupchoice == "none") {
+      nplot<- ggplot(data = tempdf,aes(xdata, ydata, color = "firebrick3")) +
+        geom_point(cex = 5) +
+        xlim(range(xdata)) +
+        ylim(range(ydata)) +
+        xlab(xvar) +
+        ylab(yvar) +
+        theme_wsj()
+      if(input$regression == "none"){
+        print(nplot)
+      }
+      if(input$regression == "linear"){
+        print(nplot +
+                geom_smooth(method = lm, se = FALSE, formula = my.formula) +
+                stat_poly_eq(formula = my.formula,
+                             eq.with.lhs = "italic(hat(y))~`=`~",
+                             aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")), 
+                             parse = TRUE, color = "black"))
+      }
+      if(input$regression == "loess"){
+        print(nplot +
+                geom_smooth(se = FALSE))
+      }
+      
+    } 
     
     if(groupchoice == "Division") {
-      ggplot(data = tempdf,aes(xdata, ydata, color = Division, shape = Conference)) +
+     dplot<- ggplot(data = tempdf,aes(xdata, ydata, color = Division, shape = Conference)) +
         geom_point(cex = 5) +
         xlim(range(xdata)) +
         ylim(range(ydata)) +
@@ -164,7 +212,26 @@ shinyServer(function(input, output, session) {
         ylab(yvar) +
         scale_color_manual(values = c("navy","dodgerblue3","steelblue2","turquoise1", "orangered3", "firebrick3", "violetred2", "red")) +
         theme_wsj()
-    } else {ggplot(data = tempdf,aes(xdata, ydata, color = Conference, shape = Conference)) +
+     if(input$regression == "none"){
+       print(dplot)
+     }
+     if(input$regression == "linear"){
+       print(dplot +
+         geom_smooth(method = lm, se = FALSE, formula = my.formula) +
+           stat_poly_eq(formula = my.formula,
+                        eq.with.lhs = "italic(hat(y))~`=`~",
+                        aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")), 
+                        parse = TRUE))
+     }
+     if(input$regression == "loess"){
+       print(dplot +
+         geom_smooth(se = FALSE))
+     }
+     
+    }
+    
+    if(groupchoice == "Conference") {
+      cplot <-ggplot(data = tempdf,aes(xdata, ydata, color = Conference, shape = Conference)) +
         geom_point(cex = 5) +
         xlim(range(xdata)) +
         ylim(range(ydata)) +
@@ -172,15 +239,36 @@ shinyServer(function(input, output, session) {
         ylab(yvar) +
         scale_color_manual(values = c("dodgerblue3", "firebrick3")) +
         theme_wsj()
+      if(input$regression == "none"){
+        print(cplot)
       }
-    
-    
-    
+      if(input$regression == "linear"){
+        print(cplot +
+          geom_smooth(method = lm, se = FALSE, formula = my.formula) +
+            stat_poly_eq(formula = my.formula,
+                         eq.with.lhs = "italic(hat(y))~`=`~",
+                         aes(label = paste(..eq.label.., ..rr.label.., sep = "*plain(\",\")~")), 
+                         parse = TRUE))
+      }
+      if(input$regression == "loess"){
+        print(cplot +
+          geom_smooth(se = FALSE))
+      }
+      
+    }
   })
   
+output$correlation <- renderText({
+  xvar <- input$xaxis
+  yvar <- input$yaxis
   
+  xdata <- NFL2016stats[[xvar]]
+  ydata <- NFL2016stats[[yvar]]
   
+  corval <- cor(xdata, ydata)
+  
+  sprintf("The correlation coefficient is %.7s", corval)
   
 })
 
-
+})
