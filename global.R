@@ -1,32 +1,7 @@
-if (!require(readr))
-  install.packages("readr")
-if (!require(dplyr))
-  install.packages("dplyr")
-if (!require(sp))
-  install.packages("sp")
-if (!require(shiny))
-  install.packages("shiny")
-if (!require(leaflet))
-  install.packages("leaflet")
-if (!require(RColorBrewer))
-  install.packages("RColorBrewer")
-if (!require(scales))
-  install.packages("scales")
-if (!require(lattice))
-  install.packages("lattice")
-if (!require(dplyr))
-  install.packages("dplyr")
-if (!require(ggplot2))
-  install.packages("ggplot2")
-if (!require(ggthemes))
-  install.packages("ggthemes")
-if (!require(DT))
-  install.packages("DT")
-
-
 library(readr)
 library(dplyr)
 library(sp)
+
 
 NFL2016stats <- read_csv("NFL2016stats.csv")
 
@@ -59,6 +34,7 @@ datatable <- NFL2016stats %>%
     "Superbowl Percent Win" = `SuperbowlPercent`,
     "Superbowl Points" = `SuperbowlPoints`,
     "Superbowl Opposing Points" = `SuperbowlOpposingPoints`)
+
 
 
 
